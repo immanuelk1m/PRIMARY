@@ -17,8 +17,6 @@ interface RpcResult {
 export async function POST(request: NextRequest, { params }: { params: { postId: string } }) {
   // Use @ts-expect-error instead of @ts-ignore for the cookie type issue
   // TODO: Investigate Supabase SSR types for NextRequest cookies or alternative client creation
-  // @ts-ignore - This was the previous attempt, keeping the comment for context
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-expect-error // No longer needed as we use cookies() from next/headers
   const supabaseAuth = createSupabaseServerClient(cookies()); // 인증 확인용 (next/headers의 cookies() 사용)
 
