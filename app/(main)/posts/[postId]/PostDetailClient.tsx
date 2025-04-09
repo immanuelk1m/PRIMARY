@@ -1,8 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useUser } from 'hooks/useUser'; // 경로 확인
-import MarkdownRenderer from 'components/common/MarkdownRenderer'; // 경로 확인
-import { Skeleton } from 'components/ui/skeleton'; // 경로 확인
+import { useUser } from '../../../../hooks/useUser';
+import MarkdownRenderer from '../../../../components/common/MarkdownRenderer';
+import { Skeleton } from '../../../../components/ui/skeleton';
 import { Post } from 'types'; // Post 타입 import (경로 및 타입명 확인 필요)
 
 // 서버에서 미리 가져온 게시물 데이터 타입 (getPostById 반환 타입 기반)

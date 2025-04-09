@@ -3,7 +3,6 @@
 import dynamic from 'next/dynamic'; // 클라이언트 측에서만 로드
 import { Controller, useFormContext } from 'react-hook-form';
 import '@uiw/react-md-editor/markdown-editor.css';
-import '@uiw/react-md-editor/react-markdown-preview.css';
 import { Label } from '@/components/ui/label'; // 경로 수정
 
 // react-md-editor는 클라이언트 측에서만 렌더링되어야 함
