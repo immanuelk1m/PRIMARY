@@ -12,6 +12,7 @@ export async function middleware(req: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession();
 
   const { pathname } = req.nextUrl;
+  const isAdminPath = pathname.startsWith('/admin');
 
   // 보호할 경로 목록 (시작 경로 기준)
   // '/invite' 경로 추가
@@ -27,6 +28,29 @@ export async function middleware(req: NextRequest) {
     console.log(`Redirecting unauthenticated user from ${pathname} to ${redirectUrl.toString()}`); // 디버깅 로그
     return NextResponse.redirect(redirectUrl);
   }
+
+  // 2. 관리자 경로 접근 시, 로그인 + 관리자 역할 확인
+  if (isAdminPath && session) {
+    // 방법 A: is_admin 함수 호출 (권장)
+    const { data: isAdmin, error: rpcError } = await supabase.rpc('is_admin', { p_user_id: session.user.id });
+
+    if (rpcError || !isAdmin) {
+      console.warn(`Admin access denied for user ${session.user.id} to path ${pathname}. IsAdmin: ${isAdmin}, Error: ${rpcError?.message}`);
+      return NextResponse.redirect(new URL('/', req.url)); // 접근 거부 시 홈으로
+    }
+    // 방법 B: users 테이블 직접 조회 (비추천: 미들웨어 성능 영향)
+    /*
+    const { data: profile, error: profileError } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', session.user.id)
+      .single();
+    if (profileError || profile?.role !== 'admin') {
+       return NextResponse.redirect(new URL('/', req.url));
+    }
+    */
+  }
+
 
   // 로그인 페이지인데 세션이 있으면 홈페이지로 리디렉션 (선택적)
   if (pathname === '/login' && session) {

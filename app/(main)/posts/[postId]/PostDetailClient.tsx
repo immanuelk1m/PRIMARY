@@ -49,9 +49,11 @@ export default function PostDetailClient({ post: initialPost, postId }: { post: 
 
       // 2. Paid user or author
       // Use profile?.tier and initialPost.user_id directly
-      if (profile?.tier === 'paid' || initialPost.user_id === user.id) {
+      if (profile?.tier === 'paid' || (user && initialPost.user_id === user.id)) {
         setCanView(true);
+          console.log('View granted: Token consumed successfully'); // Debug log
         setContent(initialPost.content); // Set full content
+        console.log('View granted: Paid user or author'); // Debug log
         setIsLoading(false);
         return;
       }
@@ -64,11 +66,13 @@ export default function PostDetailClient({ post: initialPost, postId }: { post: 
 
         if (response.ok && result.canView) {
           setCanView(true);
+          console.log('View granted: Token consumed successfully'); // Debug log
           // No need to reload content on API success (already in initialPost)
           setContent(initialPost.content);
         } else {
           setCanView(false);
           setErrorMessage(result.message || result.error || '열람 권한이 없습니다.');
+          console.log('View denied: API response indicates no permission', result); // Debug log
           setContent(initialPost.preview || initialPost.content?.substring(0, 200) || ''); // Show only preview
         }
       } catch (error: unknown) { // Changed 'any' to 'unknown'
@@ -77,6 +81,7 @@ export default function PostDetailClient({ post: initialPost, postId }: { post: 
         // More robust error message extraction
         const message = error instanceof Error ? error.message : '열람 권한 확인 중 오류가 발생했습니다.';
         setErrorMessage(message);
+        console.log('View denied: Error during API call', error); // Debug log
         setContent(initialPost.preview || initialPost.content?.substring(0, 200) || ''); // Show only preview
       } finally {
         setIsLoading(false);
@@ -86,7 +91,7 @@ export default function PostDetailClient({ post: initialPost, postId }: { post: 
     checkViewPermission();
     // Ensure initialPost and profile are stable references or handle changes appropriately
     // If initialPost can change, it might need deeper comparison or be excluded if it only loads once.
-  }, [isLoggedIn, user, profile, userLoading, initialPost, postId]); // Dependencies checked
+  }, [isLoggedIn, user?.id, profile?.tier, userLoading, initialPost, postId]); // Use primitive dependencies
 
   // Initial data load failed (should have been handled by server component)
   if (!initialPost) return <div>게시물을 불러오는 중 오류가 발생했습니다.</div>;
