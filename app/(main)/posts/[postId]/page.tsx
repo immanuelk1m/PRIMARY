@@ -15,7 +15,7 @@ export default async function PostDetailPage({ params }: { params: { postId: str
     notFound();
   }
 
-  // 클라이언트 컴포넌트에 데이터 전달하여 렌더링
+  // 클라이언트 컴포넌트에 데이터 전달하여 렌더링 !
   // Pass the fetched post data to the client component
   return <PostDetailClient post={post} postId={params.postId} />;
 }
