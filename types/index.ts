@@ -14,3 +14,6 @@ export type PostWithRelations = Post & {
   users: Profile | null; // users 테이블과의 관계 (단일)
   tags: Tag[]; // tags 테이블과의 관계 (다대다)
 };
+
+// 게시물 상태 타입 (Story 6.6에서 구체화될 수 있음)
+export type PostStatus = 'pending' | 'approved' | 'rejected';
