@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-// import { cookies } from 'next/headers'; // Not used
+import { cookies } from 'next/headers';
 
 // Define the expected structure of the RPC result
 interface RpcResult {
@@ -19,8 +19,8 @@ export async function POST(request: NextRequest, { params }: { params: { postId:
   // TODO: Investigate Supabase SSR types for NextRequest cookies or alternative client creation
   // @ts-ignore - This was the previous attempt, keeping the comment for context
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  @ts-expect - error // Corrected syntax: Supabase types might not align perfectly with NextRequest.cookies yet
-  const supabaseAuth = createSupabaseServerClient(request.cookies); // 인증 확인용 (request.cookies 사용)
+  // @ts-expect-error // No longer needed as we use cookies() from next/headers
+  const supabaseAuth = createSupabaseServerClient(cookies()); // 인증 확인용 (next/headers의 cookies() 사용)
 
   const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
 
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest, { params }: { params: { postId:
   try {
     // DB 함수 호출, specify the expected return type for the RPC call
     const { data: rpcDataUntyped, error: rpcError } = await supabaseAdmin
-      .rpc<RpcResult[]>('consume_token_for_view', { // Specify expected array type
+      .rpc<'consume_token_for_view', RpcResult[]>('consume_token_for_view', { // Specify function name and expected array type
         p_user_id: user.id,
         p_post_id: postId,
       });
