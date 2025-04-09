@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import PostDetailClient from './PostDetailClient'; // 클라이언트 컴포넌트 임포트
-import { getPostById } from 'services/post.service'; // getPostById 함수 import 경로 확인
-import type { PostWithDetails } from 'services/post.service'; // Import the type for the post
+import { getPostById } from '@/services/post.service'; // getPostById 함수 import 경로 확인
+import type { PostWithDetails } from '@/services/post.service'; // Import the type for the post
 
 // Define an explicit interface for the page props
 interface PostDetailPageProps {
