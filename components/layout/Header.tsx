@@ -10,7 +10,7 @@ import { TokenBalanceDisplay } from '@/components/feature/token/TokenBalanceDisp
 const Header = () => {
   const router = useRouter();
   const supabase = createSupabaseBrowserClient();
-  const { user, isLoggedIn } = useUser(); // useUser 훅 사용 및 isLoggedIn 상태 가져오기
+  const { isLoggedIn } = useUser(); // Removed unused 'user' variable
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();

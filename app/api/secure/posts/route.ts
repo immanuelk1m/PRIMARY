@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
   let body;
   try {
     body = await request.json();
-  } catch (_error) { // Changed 'e' to '_error' as it's unused
+  } catch { // Removed unused variable binding
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 

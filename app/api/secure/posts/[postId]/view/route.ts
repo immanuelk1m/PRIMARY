@@ -68,14 +68,12 @@ export async function POST(request: NextRequest, { params }: { params: { postId:
 
     // 성공 시 (열람 가능)
     return NextResponse.json({ canView: true, message: message });
+} catch (error: unknown) { // Changed 'any' to 'unknown'
+  console.error('Error consuming token for view:', error);
+  // Extract error message safely
+  const errorMessage = (error instanceof Error) ? error.message : 'Failed to process view request';
 
-  } catch (error: unknown) { // Changed 'any' to 'unknown'
-    console.error('Error consuming token for view:', error);
-    // DB 함수 내 오류 메시지 또는 일반 오류 메시지 전달
-    const errorMessage = (error instanceof Error && 'details' in error)
-      ? (error as any).details // Keep accessing details if it's a known structure
-      : (error instanceof Error ? error.message : 'Failed to process view request');
-    // catch 블록에서는 canView가 false라고 가정
-    return NextResponse.json({ canView: false, error: 'Failed to process view request', details: errorMessage }, { status: 500 });
-  }
+  // catch 블록에서는 canView가 false라고 가정
+  return NextResponse.json({ canView: false, error: 'Failed to process view request', details: errorMessage }, { status: 500 });
+}
 }
