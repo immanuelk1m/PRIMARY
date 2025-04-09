@@ -1,26 +1,16 @@
 import { notFound } from 'next/navigation';
-import PostDetailClient from './PostDetailClient'; // 클라이언트 컴포넌트 임포트
-import { getPostById } from '@/services/post.service'; // getPostById 함수 import 경로 확인
-import type { PostWithDetails } from '@/services/post.service'; // Import the type for the post
+import PostDetailClient from './PostDetailClient'; 
+import { getPostById } from '@/services/post.service';
+import type { PostWithDetails } from '@/services/post.service';
 
-// Use inline type definition for props based on Next.js convention for Server Components.
-// This avoids potential conflicts with Next.js's internal type generation for page props.
-export default async function PostDetailPage({
-  params,
-}: {
-  params: { postId: string };
-  // searchParams?: { [key: string]: string | string[] | undefined }; // Add if needed
-}) {
-  // 서버에서 초기 데이터 로드 (content 포함)
-  // getPostById는 RLS를 고려하여 구현되어야 함 (예: Supabase 클라이언트 사용)
-  const post: PostWithDetails | null = await getPostById(params.postId);
+// 타입 정의를 완전히 생략하고 단순화된 방식 사용
+export default async function PostDetailPage({ params }: any) {
+  const postId = params.postId as string;
+  const post: PostWithDetails | null = await getPostById(postId);
 
-  // RLS 통과 못한 경우 또는 게시물 없는 경우
   if (!post) {
     notFound();
   }
 
-  // 클라이언트 컴포넌트에 데이터 전달하여 렌더링 !
-  // Pass the fetched post data to the client component
-  return <PostDetailClient post={post} postId={params.postId} />;
+  return <PostDetailClient post={post} postId={postId} />;
 }
