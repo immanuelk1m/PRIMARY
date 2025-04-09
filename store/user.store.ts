@@ -3,7 +3,7 @@ import type { User } from '@supabase/supabase-js';
 // /types/index.ts 를 사용한 경우
 import type { Profile } from '../types';
 
-interface UserState {
+export interface UserState {
   user: User | null;
   profile: Profile | null;
   isLoading: boolean;
