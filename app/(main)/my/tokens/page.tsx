@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useUser } from '@/hooks/useUser';
+import { useUser } from '@/hooks/useUser'; // useUser import remains
 import { getTokenHistory } from '@/services/token.service';
 import { TokenHistoryTable } from '@/components/feature/token/TokenHistoryTable';
 import {
@@ -23,7 +23,8 @@ const ITEMS_PER_PAGE = 10; // 페이지당 항목 수
 function TokenHistoryPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, isLoggedIn, isLoading: userLoading } = useUser();
+  // 'user' is removed as it was unused
+  const { isLoggedIn, isLoading: userLoading } = useUser();
 
   const [logs, setLogs] = useState<TokenLog[]>([]);
   const [count, setCount] = useState<number | null>(null);
@@ -52,8 +53,10 @@ function TokenHistoryPageContent() {
         const { logs: fetchedLogs, count: fetchedCount } = await getTokenHistory(currentPage, ITEMS_PER_PAGE);
         setLogs(fetchedLogs);
         setCount(fetchedCount);
-      } catch (err: any) {
-        setError(err.message || '토큰 내역을 불러오는 중 오류가 발생했습니다.');
+      } catch (err: unknown) { // Changed 'any' to 'unknown'
+        // Type check for error message
+        const errorMessage = err instanceof Error ? err.message : '토큰 내역을 불러오는 중 오류가 발생했습니다.';
+        setError(errorMessage);
         setLogs([]); // 에러 시 데이터 초기화
         setCount(null);
       } finally {

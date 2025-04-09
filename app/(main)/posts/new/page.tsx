@@ -10,12 +10,13 @@ export default function NewPostPage() {
   const router = useRouter();
   // const { user, isLoading: userLoading } = useUser(); // 사용자 정보 필요 시
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  // submitError state is removed as PostForm handles its own errors
+  // const [submitError, setSubmitError] = useState<string | null>(null);
 
   // 폼 제출 핸들러 (Story 4.5에서 API 호출 로직 추가)
   const handleCreatePost = async (data: PostCreateInput) => {
     setIsSubmitting(true);
-    setSubmitError(null);
+    // setSubmitError(null); // Removed
     console.log('Form submitted data:', data); // 제출 데이터 확인용 로그
 
     try {
@@ -28,6 +29,7 @@ export default function NewPostPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
+        // Throw error to be caught by PostForm's handler
         throw new Error(errorData.error || '게시물 생성에 실패했습니다.');
       }
 
@@ -38,14 +40,18 @@ export default function NewPostPage() {
       // router.push(`/posts/${result.postId}`);
       router.push('/posts'); // 예시: 목록 페이지로 이동
       router.refresh(); // 캐시된 데이터 갱신 (선택적)
-      // TODO: 성공 메시지 표시 (Toast 등)
+      // TODO: 성공 메시지 표시 (Toast 등) - Consider doing this on the target page
 
-    } catch (error: any) {
+    } catch (error: unknown) { // Changed 'any' to 'unknown'
       console.error('Failed to create post:', error);
-      setSubmitError(error.message || '게시물 생성 중 오류가 발생했습니다.');
-      setIsSubmitting(false); // 오류 발생 시 제출 상태 해제
+      // Error is now primarily handled by PostForm, but we still need to stop submitting state here
+      setIsSubmitting(false);
+      // Re-throw the error so PostForm can catch and display it
+      throw error;
     }
     // 성공 시에는 리디렉션되므로 isSubmitting 해제 불필요할 수 있음
+    // However, if redirection fails or is slow, setting it false after push might be safer.
+    // Let's keep it simple for now, assuming redirection is fast enough.
   };
 
   // 사용자 로딩 중 표시 (선택적)
@@ -56,9 +62,10 @@ export default function NewPostPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       <h1 className="text-3xl font-bold mb-6">새 게시물 작성</h1>
+      {/* onSubmit now handles re-throwing the error for PostForm */}
       <PostForm onSubmit={handleCreatePost} isSubmitting={isSubmitting} />
-      {/* PostForm 내부에서도 에러 표시하지만, 페이지 레벨 에러 표시도 가능 */}
-      {/* {submitError &amp;&amp; <p className="text-red-500 mt-4">{submitError}</p>} */}
+      {/* Page level error display removed, handled within PostForm */}
+      {/* {submitError && <p className="text-red-500 mt-4">{submitError}</p>} */}
     </div>
   );
 }

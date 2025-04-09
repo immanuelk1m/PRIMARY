@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { cookies } from 'next/headers';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+// import { cookies } from 'next/headers'; // Keep if needed elsewhere, removed if only for user
+// import { createSupabaseServerClient } from '@/lib/supabase/server'; // Keep if needed elsewhere
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { AuthProvider } from '@/components/providers/AuthProvider'; // AuthProvider import 추가
@@ -26,16 +26,19 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieStore = cookies();
-  const supabase = createSupabaseServerClient(cookieStore); // 타입 오류는 일단 유지
-  const { data: { user } } = await supabase.auth.getUser();
+  // User fetching is handled client-side by AuthProvider, so remove server-side fetch here
+  // const cookieStore = cookies();
+  // const supabase = createSupabaseServerClient(cookieStore);
+  // const { data: { user } } = await supabase.auth.getUser(); // 'user' removed
 
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
       >
+        {/* Header now relies on client-side auth state via useUser */}
         <Header />
+        {/* AuthProvider handles fetching user/profile on client */}
         <AuthProvider>
           <main className="flex-grow">{children}</main>
         </AuthProvider>

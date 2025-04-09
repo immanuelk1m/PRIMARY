@@ -1,6 +1,6 @@
-import { cookies } from 'next/headers'; // 서버 컴포넌트에서 쿠키 접근
-import Link from 'next/link';
-import { createSupabaseServerClient } from '@/lib/supabase/server'; // 서버 클라이언트 import
+// import { cookies } from 'next/headers'; // Removed unused import
+// import Link from 'next/link'; // Removed unused import
+// import { createSupabaseServerClient } from '@/lib/supabase/server'; // Removed unused import
 import { getApprovedPosts } from '@/services/post.service'; // 경로 확인
 import type { PostWithAuthor } from '@/services/post.service'; // 게시물 타입 import
 import PostCard from '@/components/feature/post/PostCard'; // 경로 확인
@@ -20,7 +20,7 @@ export default async function PostsPage({
 }: {
   searchParams?: { page?: string };
 }) {
-  // 서버 컴포넌트에서 Supabase 클라이언트 생성 (서비스 함수 내부에서 생성해도 무방)
+  // Server client creation removed as it's not used directly here
   // const cookieStore = cookies();
   // const supabase = createSupabaseServerClient(cookieStore);
 
@@ -28,32 +28,15 @@ export default async function PostsPage({
   const postsPerPage = 10; // 페이지당 게시물 수 (환경 변수 등으로 관리 가능)
 
   // 서비스 함수 호출하여 데이터 가져오기
-  // 참고: getApprovedPosts 함수가 내부적으로 createBrowserClient를 사용하고 있다면,
-  // 서버 컴포넌트에서는 직접 서버 클라이언트로 쿼리하거나,
-  // getApprovedPosts 함수가 클라이언트를 인자로 받도록 수정해야 합니다.
-  // 여기서는 getApprovedPosts가 서버 환경에서도 동작한다고 가정합니다. (개선 필요 시 함수 수정)
+  // Assuming getApprovedPosts is designed to work in server components
+  // (e.g., uses server client internally or accepts one)
   let postsData: Awaited<ReturnType<typeof getApprovedPosts>> | null = null;
   let fetchError: string | null = null;
 
   try {
-    // 서버 컴포넌트에서 직접 DB 접근 대신 서비스 함수 사용
-     postsData = await getApprovedPosts(currentPage, postsPerPage);
-     // TODO: getApprovedPosts 함수가 서버 클라이언트를 사용하도록 수정 필요
-     // 임시 방편: 서버 클라이언트를 직접 사용하여 데이터 조회 (서비스 함수 수정 전까지)
-     /*
-     const cookieStore = cookies();
-     const supabaseServer = createSupabaseServerClient(cookieStore);
-     const from = (currentPage - 1) * postsPerPage;
-     const to = from + postsPerPage - 1;
-     const { data, error, count } = await supabaseServer
-       .from('posts')
-       .select('*, users(nickname)', { count: 'exact' })
-       .eq('status', 'approved')
-       .order('created_at', { ascending: false })
-       .range(from, to);
-     if (error) throw error;
-     postsData = { posts: (data as any[] | null) || [], count };
-     */
+    // Use the service function directly
+    postsData = await getApprovedPosts(currentPage, postsPerPage);
+    // The temporary direct DB access block is removed as we rely on the service function
 
   } catch (error) {
     console.error('Error fetching posts:', error);

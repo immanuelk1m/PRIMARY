@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
   let body;
   try {
     body = await request.json();
-  } catch (e) {
+  } catch (_error) { // Changed 'e' to '_error' as it's unused
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
@@ -36,10 +36,10 @@ export async function POST(request: NextRequest) {
 
   // 3. 태그 문자열 처리 (콤마 구분 -> 배열, 공백 제거, 최대 5개 제한)
   const tagList = tags ? tags.split(',')
-                          .map((tag: string) => tag.trim())
-                          .filter((tag: string) => tag.length > 0)
-                          .slice(0, 5) // 최대 5개까지만 사용
-                     : []; // tags가 undefined일 경우 빈 배열
+    .map((tag: string) => tag.trim())
+    .filter((tag: string) => tag.length > 0)
+    .slice(0, 5) // 최대 5개까지만 사용
+    : []; // tags가 undefined일 경우 빈 배열
 
   // 4. DB 함수 호출 (Admin 클라이언트 사용)
   const supabaseAdmin = createSupabaseAdminClient(); // Admin 클라이언트 생성
@@ -62,9 +62,10 @@ export async function POST(request: NextRequest) {
     // 성공 시 생성된 postId 반환 (201 Created)
     return NextResponse.json({ postId }, { status: 201 });
 
-  } catch (error: any) {
+  } catch (error: unknown) { // Changed 'any' to 'unknown'
     console.error('Error creating post in API route:', error);
     // 데이터베이스 오류 또는 기타 서버 오류 처리
-    return NextResponse.json({ error: 'Failed to create post', details: error.message || 'Unknown server error' }, { status: 500 });
+    const errorMessage = (error instanceof Error && 'message' in error) ? error.message : 'Unknown server error';
+    return NextResponse.json({ error: 'Failed to create post', details: errorMessage }, { status: 500 });
   }
 }

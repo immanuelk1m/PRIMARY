@@ -3,92 +3,119 @@ import { useState, useEffect } from 'react';
 import { useUser } from '../../../../hooks/useUser';
 import MarkdownRenderer from '../../../../components/common/MarkdownRenderer';
 import { Skeleton } from '../../../../components/ui/skeleton';
-import { Post } from 'types'; // Post 타입 import (경로 및 타입명 확인 필요)
+import type { PostWithDetails } from '@/services/post.service'; // Adjusted import path and type name
 
-// 서버에서 미리 가져온 게시물 데이터 타입 (getPostById 반환 타입 기반)
-// Post 타입에 content, preview, user_id, title 등이 있다고 가정
-type InitialPostData = Post | null; // getPostById가 null 반환 가능성 고려
+// Server-fetched post data type (based on getPostById return type)
+// Assuming PostWithDetails includes content, preview, user_id, title, etc.
+type InitialPostData = PostWithDetails | null; // Consider getPostById might return null
+
+// Define a more specific type for the API response
+interface ViewApiResponse {
+  canView: boolean;
+  message?: string;
+  error?: string;
+  details?: string;
+}
 
 export default function PostDetailClient({ post: initialPost, postId }: { post: InitialPostData, postId: string }) {
   const { user, profile, isLoggedIn, isLoading: userLoading } = useUser();
   const [canView, setCanView] = useState(false);
-  const [content, setContent] = useState<string | null>(initialPost?.content || null); // 초기 content
+  const [content, setContent] = useState<string | null>(initialPost?.content || null); // Initial content
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    // 초기 데이터가 없으면 바로 종료 (서버 컴포넌트에서 notFound 처리 가정)
+    // Exit early if initial data is missing (assuming server component handled notFound)
     if (!initialPost) {
-        setIsLoading(false);
-        setCanView(false); // 혹시 모를 경우 대비
-        return;
+      setIsLoading(false);
+      setCanView(false); // Just in case
+      return;
     };
-    // 사용자 정보 로딩 중이면 대기
+    // Wait if user info is loading
     if (userLoading) return;
 
     const checkViewPermission = async () => {
       setIsLoading(true);
       setErrorMessage(null);
 
-      // 1. 비로그인
+      // 1. Not logged in
       if (!isLoggedIn || !user) {
         setCanView(false);
-        // 미리보기 설정 (preview 필드가 있다면 사용, 없으면 content 일부)
-        setContent(initialPost.preview || initialPost.content?.substring(0, 200) || ''); // 미리보기 길이 조정 가능
+        // Set preview (use preview field if available, otherwise part of content)
+        setContent(initialPost.preview || initialPost.content?.substring(0, 200) || ''); // Adjust preview length if needed
         setIsLoading(false);
         return;
       }
 
-      // 2. 유료 사용자 또는 작성자
+      // 2. Paid user or author
+      // Use profile?.tier and initialPost.user_id directly
       if (profile?.tier === 'paid' || initialPost.user_id === user.id) {
         setCanView(true);
-        setContent(initialPost.content); // 전체 내용 설정
+        setContent(initialPost.content); // Set full content
         setIsLoading(false);
         return;
       }
 
-      // 3. 무료 사용자: API 호출하여 확인 및 토큰 차감 시도
+      // 3. Free user: Call API to check and attempt token deduction
       try {
         const response = await fetch(`/api/secure/posts/${postId}/view`, { method: 'POST' });
-        const result = await response.json();
+        // Use the specific type for the response JSON
+        const result: ViewApiResponse = await response.json();
 
         if (response.ok && result.canView) {
           setCanView(true);
-          // API 호출 성공 시 content 다시 로드할 필요 없음 (initialPost에 이미 있음)
+          // No need to reload content on API success (already in initialPost)
           setContent(initialPost.content);
         } else {
           setCanView(false);
-          setErrorMessage(result.message || '열람 권한이 없습니다.');
-          setContent(initialPost.preview || initialPost.content?.substring(0, 200) || ''); // 미리보기만 표시
+          setErrorMessage(result.message || result.error || '열람 권한이 없습니다.');
+          setContent(initialPost.preview || initialPost.content?.substring(0, 200) || ''); // Show only preview
         }
-      } catch (error: any) {
+      } catch (error: unknown) { // Changed 'any' to 'unknown'
         console.error('Error checking view permission:', error);
         setCanView(false);
-        setErrorMessage('열람 권한 확인 중 오류가 발생했습니다.');
-        setContent(initialPost.preview || initialPost.content?.substring(0, 200) || ''); // 미리보기만 표시
+        // More robust error message extraction
+        const message = error instanceof Error ? error.message : '열람 권한 확인 중 오류가 발생했습니다.';
+        setErrorMessage(message);
+        setContent(initialPost.preview || initialPost.content?.substring(0, 200) || ''); // Show only preview
       } finally {
         setIsLoading(false);
       }
     };
 
     checkViewPermission();
-  }, [isLoggedIn, user, profile, userLoading, initialPost, postId]); // 의존성 배열 확인
+    // Ensure initialPost and profile are stable references or handle changes appropriately
+    // If initialPost can change, it might need deeper comparison or be excluded if it only loads once.
+  }, [isLoggedIn, user, profile, userLoading, initialPost, postId]); // Dependencies checked
 
-  // 초기 데이터 로드 실패 시 (서버 컴포넌트에서 처리했어야 함)
+  // Initial data load failed (should have been handled by server component)
   if (!initialPost) return <div>게시물을 불러오는 중 오류가 발생했습니다.</div>;
+
+  // Determine author nickname safely
+  const authorNickname = initialPost.users?.nickname || '익명';
 
   return (
     <article className="container mx-auto px-4 py-8 max-w-3xl">
-      {/* 제목, 작성자 정보 등은 initialPost에서 직접 렌더링 */}
+      {/* Render title, author info, etc., directly from initialPost */}
       <h1 className="text-3xl font-bold mb-2">{initialPost.title}</h1>
       <p className="text-sm text-muted-foreground mb-4">
-        작성자: {initialPost.author_nickname || '익명'} {/* author_nickname 필드 가정 */}
+        작성자: {authorNickname} {/* Use the safely determined nickname */}
         {' | '}
-        작성일: {new Date(initialPost.created_at).toLocaleDateString()} {/* created_at 필드 가정 */}
+        작성일: {new Date(initialPost.created_at).toLocaleDateString()} {/* created_at field assumed */}
       </p>
-      {/* 태그 등 추가 정보 표시 가능 */}
+      {/* Display tags if available */}
+      {initialPost.tags && initialPost.tags.length > 0 && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {initialPost.tags.map(tag => (
+            <span key={tag.name} className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded">
+              {tag.name}
+            </span>
+          ))}
+        </div>
+      )}
 
-      <div className="mt-8 prose dark:prose-invert max-w-none"> {/* 스타일링 */}
+
+      <div className="mt-8 prose dark:prose-invert max-w-none"> {/* Styling */}
         {isLoading ? (
           <>
             <Skeleton className="h-4 w-full mb-2" />
@@ -98,13 +125,13 @@ export default function PostDetailClient({ post: initialPost, postId }: { post: 
         ) : errorMessage ? (
           <div className="p-4 border border-destructive/50 rounded-md bg-destructive/10 text-destructive">
             <p>{errorMessage}</p>
-            {/* 필요 시 유료 구독 유도 메시지 등 추가 */}
+            {/* Optionally add message to encourage paid subscription */}
           </div>
         ) : canView && content ? (
           <MarkdownRenderer content={content} />
         ) : (
-          // 미리보기 (비로그인 또는 canView false인데 에러 아닌 경우)
-          // content 상태에는 이미 미리보기 내용이 설정되어 있음
+          // Preview (for non-logged-in or canView=false without error)
+          // content state already holds the preview content
           <MarkdownRenderer content={content || ''} />
         )}
       </div>

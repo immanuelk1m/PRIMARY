@@ -34,9 +34,10 @@ export default function PostForm({ onSubmit, isSubmitting = false }: PostFormPro
     try {
       await onSubmit(data);
       // 성공 시 리디렉션 등은 상위 컴포넌트(페이지)에서 처리
-    } catch (error: any) {
+    } catch (error: unknown) { // Changed 'any' to 'unknown'
       console.error("Form submission error:", error);
-      setSubmitError(error.message || '게시물 제출 중 오류가 발생했습니다.');
+      const message = error instanceof Error ? error.message : '게시물 제출 중 오류가 발생했습니다.';
+      setSubmitError(message);
     }
   };
 
@@ -64,7 +65,7 @@ export default function PostForm({ onSubmit, isSubmitting = false }: PostFormPro
             {...register('tags')}
             placeholder="예: react, typescript, nextjs"
           />
-           {errors.tags && <p className="text-sm text-red-500 mt-1">{errors.tags.message}</p>}
+          {errors.tags && <p className="text-sm text-red-500 mt-1">{errors.tags.message}</p>}
         </div>
 
         {/* N명 제한 필드 */}

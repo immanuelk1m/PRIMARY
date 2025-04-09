@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('Unsubscribing from auth state changes.'); // 디버깅 로그 추가
       subscription.unsubscribe();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Removed unnecessary eslint-disable comment
   }, [supabase, setUserAndProfile, clearUser, setLoading]); // 의존성 배열 확인 (supabase 객체는 일반적으로 변경되지 않지만 명시적으로 포함)
 
   return <>{children}</>;
