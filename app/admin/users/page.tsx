@@ -183,7 +183,6 @@ export default function AdminUsersPage() {
                 </PaginationContent>
               </Pagination>
               {/* 이전 임시 버튼 제거 완료 */}
-              <Button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>다음</Button> */}
             </div>
           )}
         </>
