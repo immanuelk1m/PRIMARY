@@ -32,32 +32,33 @@ CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 DECLARE
   generated_invite_code text;
-  user_nickname text;
   inviter_user_id uuid;
 BEGIN
   -- 1. 고유 초대 코드 생성
   generated_invite_code := public.generate_unique_invite_code();
 
-  -- 2. 닉네임 설정: 카카오 메타데이터의 'nickname' 키 우선 사용, 없으면 기본값 ('사용자' + ID 앞 4자리)
-  -- 참고: Supabase Auth 설정에서 카카오 로그인 시 'nickname' 메타데이터 매핑 필요
-  user_nickname := COALESCE(new.raw_user_meta_data->>'nickname', '사용자' || substr(new.id::text, 1, 4));
-
-  -- 3. 초대자 ID 확인: 가입 시 메타데이터에 포함된 'invite_code' 키 기준
+  -- 2. 초대자 ID 확인: 가입 시 메타데이터에 포함된 'invite_code' 키 기준
   -- 참고: Supabase Auth 설정에서 카카오 로그인 시 'invite_code' 메타데이터 매핑 필요 (또는 다른 방식의 초대 코드 전달)
   SELECT id INTO inviter_user_id FROM public.users WHERE invite_code = new.raw_user_meta_data->>'invite_code' LIMIT 1;
 
-  -- 4. public.users 테이블에 신규 사용자 레코드 삽입
+  -- 3. public.users 테이블에 신규 사용자 레코드 삽입
   INSERT INTO public.users (id, email, nickname, invite_code, token_balance, invited_by_user_id)
   VALUES (
     new.id, -- auth.users 테이블의 id와 동일하게 설정
     new.email,
-    user_nickname,
+    -- 닉네임 설정: API nickname > 카카오 custom_name > 카카오 user_name > '익명 사용자' 순서
+    COALESCE(
+      new.raw_user_meta_data->>'nickname',
+      new.raw_user_meta_data->>'custom_name',
+      new.raw_user_meta_data->>'user_name',
+      '익명 사용자'
+    ),
     generated_invite_code,
     1, -- 초기 토큰 1개 지급 (FR-TOKEN-01)
     inviter_user_id -- 초대자 ID 설정 (없으면 NULL)
   );
 
-  -- 5. public.tokens_log 테이블에 가입 보상 토큰 지급 내역 기록
+  -- 4. public.tokens_log 테이블에 가입 보상 토큰 지급 내역 기록
   INSERT INTO public.tokens_log (user_id, change_amount, balance_after_change, reason)
   VALUES (new.id, 1, 1, 'signup');
 
