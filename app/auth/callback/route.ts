@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     const cookieStore = cookies();
-    // @ts-ignore // createSupabaseServerClient 타입 문제 임시 해결 (필요시 제거 또는 수정)
+    // @ts-expect-error // createSupabaseServerClient 타입 문제 임시 해결 (필요시 제거 또는 수정)
     const supabase = createSupabaseServerClient(cookieStore);
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
