@@ -1,10 +1,19 @@
 'use client'; // 클라이언트 컴포넌트
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AdminReportTable from '@/components/admin/AdminReportTable'; // 테이블 컴포넌트 import
 import { ReportWithRelations } from '@/services/admin.service'; // 타입 import
-// import { Button } from '@/components/ui/button'; // Unused import removed
+import { getReportsForAdmin } from '@/services/admin.service'; // 데이터 가져오기 함수 import
+import { toast } from 'sonner';
+import type { Enums } from '@/types/database.types'; // Enums 타입 import
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'; // Select 컴포넌트 import
 import {
   Pagination,
   PaginationContent,
@@ -13,11 +22,9 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination'; // Pagination 컴포넌트 import
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // Select 컴포넌트 import
-import { toast } from 'sonner';
-import type { Enums } from '@/types/database.types'; // Enums 타입 import
 
-export default function AdminReportsPage() {
+// 실제 페이지 로직을 담는 내부 컴포넌트
+function AdminReportsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -115,7 +122,7 @@ export default function AdminReportsPage() {
       toast.error(`상태 업데이트 실패: ${message}`);
       return false; // 성공 여부 반환
     }
-  }, [fetchReports, currentPage, statusFilter]); // 의존성 배열 수정
+  }, [fetchReports, currentPage, statusFilter]);
 
   // 신고 상태 옵션 (DB Enum 기반)
   const reportStatusOptions: { value: Enums<'report_status'> | 'all'; label: string }[] = [
@@ -194,5 +201,14 @@ export default function AdminReportsPage() {
         </>
       )}
     </div>
+  );
+}
+
+// 페이지 컴포넌트: Suspense로 내부 컴포넌트를 감싸서 내보냄
+export default function AdminReportsPage() {
+  return (
+    <Suspense fallback={<div className="p-4">Loading reports...</div>}> {/* fallback UI 제공 */}
+      <AdminReportsPageContent />
+    </Suspense>
   );
 }
