@@ -1,11 +1,10 @@
 'use client'; // 클라이언트 컴포넌트
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AdminUserTable from '@/components/admin/AdminUserTable'; // 테이블 컴포넌트 import
 import { Profile } from '@/types'; // 타입 import
 import { Input } from '@/components/ui/input';
-// import { Button } from '@/components/ui/button';
 import {
   Pagination,
   PaginationContent,
@@ -20,7 +19,8 @@ import { debounce } from 'lodash-es'; // 디바운스 import
 
 // TODO: 페이지네이션 컴포넌트 실제 경로 및 props 확인 필요
 
-export default function AdminUsersPage() {
+// 실제 페이지 로직을 담는 내부 컴포넌트
+function AdminUsersPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -187,5 +187,14 @@ export default function AdminUsersPage() {
         </>
       )}
     </div>
+  );
+}
+
+// 페이지 컴포넌트: Suspense로 내부 컴포넌트를 감싸서 내보냄
+export default function AdminUsersPage() {
+  return (
+    <Suspense fallback={<div className="p-4">Loading users...</div>}>
+      <AdminUsersPageContent />
+    </Suspense>
   );
 }
