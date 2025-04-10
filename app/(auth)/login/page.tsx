@@ -70,12 +70,6 @@ export default function LoginPage() {
             <Button type="submit" className="w-full rounded-md"> {/* 모서리 둥글게 */}
               이메일로 로그인
             </Button>
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            이미 계정이 있으신가요?{' '}
-            <Link href="/login" className="underline">
-              로그인
-            </Link>
-          </p>
           </form>
           {/* 구분선 */}
           <div className="relative my-2"> {/* 마진 조정 */}
