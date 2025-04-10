@@ -4,7 +4,7 @@ import type { ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension
 import { createSupabaseServerClient } from '@/lib/supabase/server'; // 서버 클라이언트 import
 import { getPostsForAdmin } from '@/services/admin.service'; // 관리자 서비스 함수 import
 
-export async function GET(_request: Request) { // Prefix unused variable with underscore
+export async function GET() { // _request 파라미터 제거
   const cookieStore = cookies() as unknown as ReadonlyRequestCookies; // unknown을 통한 타입 단언
   const supabase = createSupabaseServerClient(cookieStore);
 
