@@ -76,9 +76,10 @@ export default function LoginPage() {
       // 회원가입 성공
       toast.success('회원가입이 완료되었습니다. 로그인해주세요.');
       router.push('/login?signup=success'); // 성공 파라미터와 함께 리디렉션
-    } catch (err: any) {
-      setError(err.message);
-      toast.error(err.message || '회원가입 처리 중 문제가 발생했습니다.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : '회원가입 처리 중 문제가 발생했습니다.';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
