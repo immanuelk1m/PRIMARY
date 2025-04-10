@@ -2,6 +2,7 @@
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { PostStatus, Profile } from '@/types'; // Profile 타입 import 추가
 import type { Database, Enums, Tables } from '@/types/database.types'; // Tables 타입 추가 import
+import type { PostWithRelations, Tag } from '@/types'; // PostWithRelations, Profile, Tag import
 
 // TODO: 각 함수의 반환 타입 및 매개변수 타입을 더 구체적으로 정의해야 합니다.
 
@@ -62,17 +63,68 @@ export async function getUsersForAdmin(params: GetUsersParams = {}) {
   return { users: data as Profile[], count: count ?? 0 };
 }
 
+// 관리자용 게시글 목록 조회 파라미터 타입
+interface GetAdminPostsParams {
+  page?: number; // 페이지 번호 (1부터 시작)
+  limit?: number; // 페이지당 항목 수
+  // 필요하다면 여기에 status 필터 파라미터 추가 가능
+  // status?: Enums<'post_status'> | 'all';
+}
+
+
 /**
- * 관리자용 게시글 목록 조회
- * @returns 게시글 목록 배열 (구현 필요)
+ * 관리자용 게시글 목록 및 총 개수 조회 (페이지네이션 포함)
+ * @param params 페이지, 개수 등 옵션
+ * @returns 게시글 목록과 총 개수
  */
-export async function getPostsForAdmin() {
-  // TODO: Implement post fetching logic using supabaseAdmin (Story 6.6)
-  console.log('Fetching posts for admin...');
-  // getPostsForAdmin 함수 내에서 supabaseAdmin 생성 (중복 제거)
+export async function getPostsForAdmin(
+  params: GetAdminPostsParams = {}
+): Promise<{ posts: PostWithRelations[]; count: number }> {
+  const { page = 1, limit = 10 } = params; // 기본값 설정
+  console.log(`Fetching posts for admin: page=${page}, limit=${limit}`);
   const supabaseAdmin = createSupabaseAdminClient();
-  // 예시: const { data, error } = await supabaseAdmin.from('posts').select('*, author:users(nickname)');
-  return [];
+
+  // 페이지네이션 계산
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+
+  // Supabase 쿼리 작성
+  const query = supabaseAdmin
+    .from('posts')
+    .select(
+      `
+      *,
+      users!inner ( * ),
+      tags ( * )
+    `,
+      { count: 'exact' } // 전체 개수 조회를 위해 count 옵션 추가
+    )
+    // 모든 상태를 가져오므로 status 필터는 적용하지 않음
+    // 특정 상태만 필요하면 아래 주석 해제 및 수정
+    // .eq('status', 'pending')
+    // .in('status', ['pending', 'approved', 'rejected', 'needs_revision'])
+    .order('created_at', { ascending: false }) // 최신순 정렬
+    .range(from, to); // 페이지네이션 적용
+
+  // 쿼리 실행
+  const { data, error, count } = await query;
+
+  // 에러 처리
+  if (error) {
+    console.error('Error fetching posts for admin:', error);
+    throw new Error(`Failed to fetch posts: ${error.message}`);
+  }
+
+  // 결과 로깅 및 반환
+  console.log(`Fetched ${data?.length || 0} posts for admin (total: ${count})`);
+
+  // Supabase의 타입 추론이 복잡한 join을 완벽히 반영 못할 수 있으므로,
+  // 반환 시 PostWithRelations[] 타입으로 단언해주는 것이 안전할 수 있습니다.
+  // data가 null일 경우 빈 배열 반환, count가 null일 경우 0 반환
+  return {
+    posts: (data as unknown as PostWithRelations[]) || [], // 타입 단언 추가
+    count: count ?? 0,
+  };
 }
 
 // 신고 목록 조회 파라미터 타입
