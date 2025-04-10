@@ -66,15 +66,20 @@ const Header = () => {
             </Button>
           </>
         ) : (
-          <>
+          <div className="flex items-center gap-2"> {/* 버튼 그룹 및 간격 추가 */}
             {/* 로그아웃 상태일 때 */}
             <Link href="/login">
               <Button variant="outline" size="sm">
                 로그인
               </Button>
             </Link>
-            {/* 필요시 회원가입 버튼 추가 */}
-          </>
+            {/* 회원가입 버튼 추가 */}
+            <Link href="/signup">
+              <Button variant="outline" size="sm">
+                회원가입
+              </Button>
+            </Link>
+          </div>
         )}
       </div>
     </header>

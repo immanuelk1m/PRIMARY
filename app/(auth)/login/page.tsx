@@ -2,189 +2,97 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { toast } from 'sonner'; // sonner가 설치되어 있다고 가정
-
-import { KakaoLoginButton } from '../../../components/feature/auth/KakaoLoginButton';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import Link from 'next/link';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-
-// Zod 스키마 정의
-const signupSchema = z
-  .object({
-    name: z.string().min(1, { message: '이름을 입력해주세요.' }),
-    email: z.string().email({ message: '유효한 이메일 주소를 입력해주세요.' }),
-    password: z
-      .string()
-      .min(8, { message: '비밀번호는 8자 이상이어야 합니다.' }),
-    confirmPassword: z
-      .string()
-      .min(1, { message: '비밀번호 확인을 입력해주세요.' }),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: '비밀번호가 일치하지 않습니다.',
-    path: ['confirmPassword'], // 오류 메시지를 confirmPassword 필드에 연결
-  });
-
-type SignupFormValues = z.infer<typeof signupSchema>;
+import { Button } from '@/components/ui/button';
+import { KakaoLoginButton } from '@/components/feature/auth/KakaoLoginButton';
 
 export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const supabase = createSupabaseBrowserClient();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<SignupFormValues>({
-    resolver: zodResolver(signupSchema),
-  });
+  const handleEmailLogin = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault(); // 폼 기본 제출 방지
 
-  const onSubmit = async (data: SignupFormValues) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: data.name,
-          email: data.email,
-          password: data.password,
-        }),
-      });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '회원가입 중 오류가 발생했습니다.');
-      }
-
-      // 회원가입 성공
-      toast.success('회원가입이 완료되었습니다. 로그인해주세요.');
-      router.push('/login?signup=success'); // 성공 파라미터와 함께 리디렉션
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : '회원가입 처리 중 문제가 발생했습니다.';
-      setError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setIsLoading(false);
+    if (error) {
+      console.error('로그인 오류:', error.message);
+      // 사용자 친화적인 오류 메시지 표시 (예: alert 또는 토스트 메시지)
+      alert(`로그인에 실패했습니다: ${error.message}`);
+    } else {
+      // 로그인 성공 시 홈으로 리디렉션하고 페이지 새로고침
+      router.push('/');
+      router.refresh();
     }
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4 sm:p-24">
-      <div className="w-full max-w-md space-y-6">
-        {/* 기존 로그인 섹션 */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl font-semibold text-center">로그인</CardTitle>
-            <CardDescription className="text-center">
-              SNS 계정으로 간편하게 로그인하세요.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex justify-center">
-            <KakaoLoginButton />
-          </CardContent>
-          {/* 다른 로그인 옵션 추가 가능 */}
-        </Card>
-
-        {/* 회원가입 폼 섹션 */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold text-center">이메일로 회원가입</CardTitle>
-            <CardDescription className="text-center">
-              새 계정을 만들어 서비스를 이용해보세요.
-            </CardDescription>
-          </CardHeader>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <CardContent className="space-y-4">
-              {error && (
-                <p className="text-sm font-medium text-destructive text-center">
-                  {error}
-                </p>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="name">이름</Label>
-                <Input
-                  id="name"
-                  placeholder="홍길동"
-                  {...register('name')}
-                  disabled={isLoading}
-                />
-                {errors.name && (
-                  <p className="text-sm font-medium text-destructive">
-                    {errors.name.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">이메일</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  {...register('email')}
-                  disabled={isLoading}
-                />
-                {errors.email && (
-                  <p className="text-sm font-medium text-destructive">
-                    {errors.email.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">비밀번호</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="********"
-                  {...register('password')}
-                  disabled={isLoading}
-                />
-                {errors.password && (
-                  <p className="text-sm font-medium text-destructive">
-                    {errors.password.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">비밀번호 확인</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="********"
-                  {...register('confirmPassword')}
-                  disabled={isLoading}
-                />
-                {errors.confirmPassword && (
-                  <p className="text-sm font-medium text-destructive">
-                    {errors.confirmPassword.message}
-                  </p>
-                )}
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? '회원가입 중...' : '회원가입'}
-              </Button>
-            </CardFooter>
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12"> {/* 패딩 추가 */}
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1"> {/* 간격 조정 */}
+          <CardTitle className="text-2xl font-bold">로그인</CardTitle> {/* 텍스트 크기 및 굵기 조정 */}
+          <CardDescription>이메일과 비밀번호 또는 카카오 계정으로 로그인하세요.</CardDescription> {/* 설명 수정 */}
+        </CardHeader>
+        <CardContent className="grid gap-4"> {/* grid gap 추가 */}
+          <form onSubmit={handleEmailLogin} className="grid gap-4"> {/* form에도 grid gap 추가 */}
+            <div className="grid gap-2">
+              <Label htmlFor="email">이메일</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="m@example.com"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="rounded-md" // 모서리 둥글게
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="password">비밀번호</Label>
+              <Input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="rounded-md" // 모서리 둥글게
+              />
+            </div>
+            <Button type="submit" className="w-full rounded-md"> {/* 모서리 둥글게 */}
+              이메일로 로그인
+            </Button>
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            이미 계정이 있으신가요?{' '}
+            <Link href="/login" className="underline">
+              로그인
+            </Link>
+          </p>
           </form>
-        </Card>
-      </div>
+          {/* 구분선 */}
+          <div className="relative my-2"> {/* 마진 조정 */}
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                또는
+              </span>
+            </div>
+          </div>
+          {/* 카카오 로그인 버튼 */}
+          <KakaoLoginButton />
+        </CardContent>
+        {/* CardFooter는 지침에 따라 제거 */}
+      </Card>
     </div>
   );
 }
