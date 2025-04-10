@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   try {
     requestBody = await request.json();
     supabase = createSupabaseServerClient(cookieStore); // 래퍼 함수 호출 복원 (이동된 위치)
-  } catch (error) {
+  } catch { // Removed unused variable binding
     return NextResponse.json({ error: "잘못된 요청 본문입니다." }, { status: 400 });
   }
 
