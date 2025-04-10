@@ -91,7 +91,7 @@ export default function PostDetailClient({ post: initialPost, postId }: { post: 
     checkViewPermission();
     // Ensure initialPost and profile are stable references or handle changes appropriately
     // If initialPost can change, it might need deeper comparison or be excluded if it only loads once.
-  }, [isLoggedIn, user?.id, profile?.tier, userLoading, initialPost, postId]); // Use primitive dependencies
+  }, [isLoggedIn, user, user?.id, profile?.tier, userLoading, initialPost, postId]); // Add user to dependency array
 
   // Initial data load failed (should have been handled by server component)
   if (!initialPost) return <div>게시물을 불러오는 중 오류가 발생했습니다.</div>;

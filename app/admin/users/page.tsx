@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import AdminUserTable from '@/components/admin/AdminUserTable'; // 테이블 컴포넌트 import
 import { Profile } from '@/types'; // 타입 import
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+// import { Button } from '@/components/ui/button';
 import {
   Pagination,
   PaginationContent,
