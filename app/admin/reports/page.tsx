@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AdminReportTable from '@/components/admin/AdminReportTable'; // 테이블 컴포넌트 import
 import { ReportWithRelations } from '@/services/admin.service'; // 타입 import
-import { getReportsForAdmin } from '@/services/admin.service'; // 데이터 가져오기 함수 import
 import { toast } from 'sonner';
 import type { Enums } from '@/types/database.types'; // Enums 타입 import
 import {
