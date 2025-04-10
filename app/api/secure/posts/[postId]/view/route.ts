@@ -42,17 +42,14 @@ export async function POST(request: NextRequest, { params }: { params: { postId:
 
     if (rpcError) throw rpcError; // RPC 오류 발생 시 즉시 throw
 
-    // Type assertion removed, directly use the typed data
-    const rpcData = rpcDataUntyped;
-
     // 결과 처리 로직 개선
     let canView = false;
     let message = '열람 권한이 없습니다.'; // 기본 메시지
 
     // Check if data is an array and has at least one element
-    if (rpcData && Array.isArray(rpcData) && rpcData.length > 0) {
-      const firstResult = rpcData[0]; // Access the first element
-      if (firstResult && firstResult.can_view === true) {
+    if (rpcDataUntyped && Array.isArray(rpcDataUntyped) && rpcDataUntyped.length > 0) {
+      const firstResult = rpcDataUntyped[0]; // Access the first element
+      if (firstResult?.can_view === true) { // Use optional chaining
         canView = true;
         message = firstResult.message || '성공적으로 열람했습니다.';
       } else {

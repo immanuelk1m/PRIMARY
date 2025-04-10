@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscription.unsubscribe();
     };
     // Removed unnecessary eslint-disable comment
-  }, [supabase, setUserAndProfile, clearUser, setLoading]); // 의존성 배열 확인 (supabase 객체는 일반적으로 변경되지 않지만 명시적으로 포함)
+  }, [supabase, setUserAndProfile, clearUser, setLoading]); // supabase 의존성 추가됨 (이전 커밋에서 이미 반영되었을 수 있음, 확인 필요)
 
   return <>{children}</>;
 }

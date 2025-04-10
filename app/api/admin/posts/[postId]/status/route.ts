@@ -69,13 +69,9 @@ export async function PUT(
         // approved가 false인 경우는 함수 내부 로직에 의해 처리된 것 (예: 이미 승인됨)
         const errorMessage = approveError ? 'Database error during approval' : 'Post not found or already approved';
         return NextResponse.json({ error: errorMessage }, { status: approveError ? 500 : 404 });
-      } else {
-        // 'pending' 등 다른 상태로의 변경은 현재 로직에서 허용하지 않음
-        return NextResponse.json({ error: 'Invalid status transition' }, { status: 400 });
       }
       return NextResponse.json({ message: `Post ${postId} approved and token granted.` });
-
-    } else if (newStatus === 'rejected') {
+    } if (newStatus === 'rejected') {
       // Admin Client 사용하여 직접 업데이트 (반려 로직)
       const supabaseAdmin = createSupabaseAdminClient();
       const { error: rejectError } = await supabaseAdmin
